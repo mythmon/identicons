@@ -5,6 +5,7 @@ extern crate iron_tera;
 extern crate tera;
 #[macro_use]
 extern crate lazy_static;
+extern crate ctrlc;
 
 use iron::prelude::*;
 use iron::{status, AfterMiddleware};
@@ -15,15 +16,22 @@ use std::hash::Hasher;
 use tera::Context;
 use iron_tera::{Template, TemplateMode, TeraEngine};
 
-
+// TODO read PORT and HOST from env
 // TODO add support for versions
 // TODO multiple template support (need another template)
 // TODO smarter context generation (probably a struct for all the needed fields?)
 // TODO can treatments be sub-templates?
 // TODO can templates and their data be better tied?
 
-
 fn main() {
+    // Rust doesn't have a ctrl-c handler itself, so when running as
+    // PID 1 in Docker it doesn't respond to SIGINT. This prevents
+    // ctrl-c from stopping a docker container running this
+    // program. Handle SIGINT (aka ctrl-c) to fix this problem.
+    ctrlc::set_handler(move || {
+        ::std::process::exit(1);
+    }).expect("error setting ctrl-c handler");
+
     let mut router = Router::new();
     router.get("/", handler, "index");
     router.get("/:query", handler, "shield");
@@ -34,8 +42,10 @@ fn main() {
     chain.link_after(teng);
     chain.link_after(ErrorHandler);
 
-    Iron::new(chain).http("localhost:3000")
-        .expect("Could not start server");
+    let host = "0.0.0.0:3000";
+    let server = Iron::new(chain);
+    let _listening = server.http(host).expect("could not start server");
+    println!("listening on http://{}", host);
 }
 
 struct ErrorHandler;
