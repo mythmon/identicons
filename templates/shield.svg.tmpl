@@ -15,20 +15,20 @@
             </clipPath>
         </defs>
         <g clip-path="url(#shield-border)">
-            <rect fill="{{ field_color }}" width="100" height="100"/>
-            {% if treatment == "TwoColor" %}
-                <g transform="{{ transform }}">
-                    <rect fill="{{ pattern_color }}" x="-0.25" y="-0.25" width="1.5" height="0.75" />
+            <rect fill="{{ icon.field_color | css }}" width="100" height="100"/>
+            {% if icon.treatment == "TwoColor" %}
+                <g transform="{{ icon.transform }}">
+                    <rect fill="{{ icon.pattern_color | css }}" x="-0.25" y="-0.25" width="1.5" height="0.75" />
                 </g>
-            {% elif treatment == "Stripes" %}
-                <g transform="{{  transform }}">
-                {% for stripe_x in stripe_x_list %}
+            {% elif icon.treatment == "Stripes" %}
+                <g transform="{{ icon.transform }}">
+                {% for stripe_x in icon.stripe_x_list %}
                     <rect
                         x="{{ stripe_x }}"
                         y="-0.25"
-                        width="{{ stride }}"
+                        width="{{ icon.stride }}"
                         height="1.5"
-                        fill="{{ pattern_color }}"
+                        fill="{{ icon.pattern_color | css }}"
                     />,
                 {% endfor %}
                 </g>
@@ -42,7 +42,7 @@
                 x="50"
                 y="72"
             >
-                {{ emoji }}
+                {{ icon.emoji }}
             </text>
         </g>
     </g>

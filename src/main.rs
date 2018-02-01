@@ -6,11 +6,15 @@ extern crate tera;
 #[macro_use]
 extern crate lazy_static;
 extern crate ctrlc;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
 
 use iron::prelude::*;
 use iron::{status, AfterMiddleware};
 use rand::{Rng, SeedableRng};
 use router::Router;
+use std::collections::HashMap;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::Hasher;
 use tera::Context;
@@ -19,9 +23,10 @@ use iron_tera::{Template, TemplateMode, TeraEngine};
 // TODO read PORT and HOST from env
 // TODO add support for versions
 // TODO multiple template support (need another template)
-// TODO smarter context generation (probably a struct for all the needed fields?)
 // TODO can treatments be sub-templates?
 // TODO can templates and their data be better tied?
+// TODO use photon colors instead of solarized colors
+// TODO migrate TODOs to GH issues
 
 fn main() {
     // Rust doesn't have a ctrl-c handler itself, so when running as
@@ -38,7 +43,8 @@ fn main() {
 
     let mut chain = Chain::new(router);
 
-    let teng = TeraEngine::new("templates/**/*");
+    let mut teng = TeraEngine::new("templates/**/*");
+    teng.tera.register_filter("css", tera_to_css);
     chain.link_after(teng);
     chain.link_after(ErrorHandler);
 
@@ -82,7 +88,16 @@ impl<R: Rng> RngExt for R {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+fn tera_to_css(value: tera::Value, _args: HashMap<String, tera::Value>) -> tera::Result<tera::Value> {
+    let debug_copy = value.clone();
+    if let Ok(color) = tera::from_value::<Color>(value) {
+        Ok(tera::Value::String(color.css_color()))
+    } else {
+        Err(tera::Error::from_kind(tera::ErrorKind::Msg(format!("css is not implemented for {:?}", debug_copy))))
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 struct Color {
     pub r: u8,
     pub g: u8,
@@ -90,12 +105,16 @@ struct Color {
 }
 
 impl Color {
+    fn black() -> Self {
+        Self { r: 0, g: 0, b: 0 }
+    }
+
     fn css_color(&self) -> String {
         format!("rgb({},{},{})", self.r, self.g, self.b)
     }
 
-    fn luminance(&self) -> f64 {
-        0.2126 * self.r as f64 + 0.7152 * self.g as f64 + 0.0722 * self.b as f64
+    fn luminance(&self) -> f32 {
+        0.2126 * self.r as f32 + 0.7152 * self.g as f32 + 0.0722 * self.b as f32
     }
 
     fn contrasts_well(&self, other: &Self) -> bool {
@@ -160,6 +179,84 @@ lazy_static!(
     ];
 );
 
+#[derive(Serialize, Deserialize)]
+enum ShieldIconTreatment {
+    SingleColor,
+    TwoColor {
+        pattern_color: Color,
+        transform: String,
+    },
+    Stripes {
+        pattern_color: Color,
+        stride: f32,
+        stripe_xs: Vec<f32>,
+        transform: String,
+    },
+}
+
+#[derive(Serialize, Deserialize)]
+struct ShieldIconData {
+    treatment: ShieldIconTreatment,
+    field_color: Color,
+    emoji: char,
+}
+
+impl ShieldIconData {
+    fn empty() -> Self {
+        ShieldIconData {
+            treatment: ShieldIconTreatment::SingleColor,
+            field_color: Color::black(),
+            emoji: ' ',
+        }
+    }
+}
+
+impl rand::Rand for ShieldIconData {
+    fn rand<R: Rng>(rng: &mut R) -> Self {
+        let mut rv = ShieldIconData::empty();
+
+        let angle_choices: Vec<u16> = (0..8).map(|a| a * 45).collect();
+
+        rv.field_color = *rng.choose(&COLORS).unwrap();
+        let contrasting_colors: Vec<Color> = COLORS.iter()
+            .filter(|c| rv.field_color.contrasts_well(c))
+            .map(|c| *c)
+            .collect();
+        rv.emoji = *rng.choose(&EMOJIS).unwrap();
+
+        let pattern_color = *rng.choose(&contrasting_colors).unwrap();
+
+        let treatment_name = rng.weighted_choice(vec![
+            ("SingleColor", 1),
+            ("TwoColor", 4),
+            ("Stripes", 6),
+        ]);
+
+        match treatment_name {
+            "SingleColor" => (),
+            "TwoColor" => {
+                let angle = rng.choose(&angle_choices).unwrap();
+                let transform = format!("scale(100) rotate({} 0.5,0.5)", angle);
+                rv.treatment = ShieldIconTreatment::TwoColor { transform, pattern_color };
+            },
+            "Stripes" => {
+                let count: u8 = rng.gen_range(1, 4);
+                let padding = rng.gen_range(0.1, 0.4);
+                let stride = (1.0 - 2.0 * padding) / (2.0 * count as f32 + 1.0);
+                let stripe_xs: Vec<f32> = (0..count)
+                    .map(|i| padding + stride * (2 * i + 1) as f32)
+                    .collect();
+                let angle = rng.choose(&angle_choices).unwrap();
+                let transform = format!("scale(100) rotate({} 0.5,0.5)", angle);
+                rv.treatment = ShieldIconTreatment::Stripes { stride, stripe_xs, pattern_color, transform };
+            },
+            _ => panic!("Unexpected treatment name"),
+        }
+
+        rv
+    }
+}
+
 fn handler(req: &mut Request) -> Result<Response, IronError> {
     let ref query = req.extensions.get::<Router>().unwrap()
         .find("query").unwrap_or("/");
@@ -174,50 +271,11 @@ fn handler(req: &mut Request) -> Result<Response, IronError> {
     let mut rng = rand::XorShiftRng::from_seed(seed);
 
     let mut context = Context::new();
-
-    let treatment = rng.weighted_choice(vec![
-        ("SingleColor", 1),
-        ("TwoColor", 4),
-        ("Stripes", 6),
-    ]);
-    context.add("treatment", &treatment);
-
-    let angle_choices: Vec<u16> = (0..8).map(|a| a * 45).collect();
-
-    match treatment {
-        "SingleColor" => (),
-        "TwoColor" => {
-            let angle = rng.choose(&angle_choices).unwrap();
-            context.add("transform", &format!("scale(100) rotate({} 0.5,0.5)", angle));
-        }
-        "Stripes" => {
-            let count: u8 = rng.gen_range(1, 4);
-            let padding = rng.gen_range(0.1, 0.4);
-            let stride = (1.0 - 2.0 * padding) / (2.0 * count as f64 + 1.0);
-            let stripe_x_list: Vec<f64> = (0..count)
-                .map(|i| padding + stride * (2 * i + 1) as f64)
-                .collect();
-            context.add("stripe_x_list", &stripe_x_list);
-            context.add("stride", &stride);
-            let angle = rng.choose(&angle_choices).unwrap();
-            context.add("transform", &format!("scale(100) rotate({} 0.5,0.5)", angle));
-        }
-        _ => panic!("Unknown treatment"),
-    }
-
-    let field_color = rng.choose(&COLORS).unwrap();
-    context.add("field_color", &field_color.css_color());
-    let contrasting_colors: Vec<Color> = COLORS.iter()
-        .filter(|c| field_color.contrasts_well(c))
-        .map(|c| *c)
-        .collect();
-    context.add("pattern_color", &rng.choose(&contrasting_colors).unwrap().css_color());
-    context.add("emoji", &rng.choose(&EMOJIS).unwrap());
+    context.add("icon", &rng.gen::<ShieldIconData>());
 
     let template = Template::new("shield.svg.tmpl", TemplateMode::from_context(context));
 
     let mut resp = Response::new();
-    resp.set_mut(status::Ok);
-    resp.set_mut(template);
+    resp.set_mut((status::Ok, template));
     Ok(resp)
 }
