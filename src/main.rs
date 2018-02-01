@@ -180,6 +180,7 @@ lazy_static!(
 );
 
 #[derive(Serialize, Deserialize)]
+#[serde(tag = "type")]
 enum ShieldIconTreatment {
     SingleColor,
     TwoColor {

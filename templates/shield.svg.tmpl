@@ -16,19 +16,19 @@
         </defs>
         <g clip-path="url(#shield-border)">
             <rect fill="{{ icon.field_color | css }}" width="100" height="100"/>
-            {% if icon.treatment == "TwoColor" %}
-                <g transform="{{ icon.transform }}">
-                    <rect fill="{{ icon.pattern_color | css }}" x="-0.25" y="-0.25" width="1.5" height="0.75" />
+            {% if icon.treatment.type == "TwoColor" %}
+                <g transform="{{ icon.treatment.transform }}">
+                    <rect fill="{{ icon.treatment.pattern_color | css }}" x="-0.25" y="-0.25" width="1.5" height="0.75" />
                 </g>
-            {% elif icon.treatment == "Stripes" %}
-                <g transform="{{ icon.transform }}">
-                {% for stripe_x in icon.stripe_x_list %}
+            {% elif icon.treatment.type == "Stripes" %}
+                <g transform="{{ icon.treatment.transform }}">
+                {% for stripe_x in icon.treatment.stripe_xs %}
                     <rect
                         x="{{ stripe_x }}"
                         y="-0.25"
-                        width="{{ icon.stride }}"
+                        width="{{ icon.treatment.stride }}"
                         height="1.5"
-                        fill="{{ icon.pattern_color | css }}"
+                        fill="{{ icon.treatment.pattern_color | css }}"
                     />,
                 {% endfor %}
                 </g>
