@@ -11,14 +11,14 @@ extern crate serde;
 extern crate serde_derive;
 
 use iron::prelude::*;
-use iron::{status, AfterMiddleware};
+use iron::{status, AfterMiddleware, headers, mime};
+use iron_tera::{Template, TemplateMode, TeraEngine};
 use rand::{Rng, SeedableRng};
 use router::Router;
 use std::collections::HashMap;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::Hasher;
 use tera::Context;
-use iron_tera::{Template, TemplateMode, TeraEngine};
 
 // TODO read PORT and HOST from env
 // TODO add support for versions
@@ -38,8 +38,8 @@ fn main() {
     }).expect("error setting ctrl-c handler");
 
     let mut router = Router::new();
-    router.get("/", handler, "index");
-    router.get("/:query", handler, "shield");
+    router.get("/", index, "index");
+    router.get("/i/shield/v1/:query", icon_generator, "shield");
 
     let mut chain = Chain::new(router);
 
@@ -258,12 +258,29 @@ impl rand::Rand for ShieldIconData {
     }
 }
 
-fn handler(req: &mut Request) -> Result<Response, IronError> {
-    let ref query = req.extensions.get::<Router>().unwrap()
-        .find("query").unwrap_or("/");
+fn index(_: &mut Request) -> Result<Response, IronError> {
+    let context = Context::new();
+    let template = Template::new("index.html.tmpl", TemplateMode::from_context(context));
+    let mut resp = Response::new();
+    resp.set_mut((status::Ok, template));
+    Ok(resp)
+}
+
+fn icon_generator(req: &mut Request) -> Result<Response, IronError> {
+    let router = req.extensions.get::<Router>().unwrap();
+    let ref query = router.find("query").unwrap();
+
+    let (seed, ext) = if query.contains(".") {
+        let mut parts: Vec<&str> = query.splitn(2, ".").collect();
+        let ext = parts.pop().unwrap().to_string();
+        let seed = parts.pop().unwrap().to_string();
+        (seed, ext)
+    } else {
+        (query.to_string(), "svg".to_string())
+    };
 
     let mut hasher = DefaultHasher::new();
-    hasher.write(&query.bytes().collect::<Vec<u8>>());
+    hasher.write(&seed.bytes().collect::<Vec<u8>>());
     let hash = hasher.finish();
 
     let high = ((hash & 0xFFFF_FFFF_0000_0000) >> 32) as u32;
@@ -271,12 +288,25 @@ fn handler(req: &mut Request) -> Result<Response, IronError> {
     let seed = [high, low, 0, 0];
     let mut rng = rand::XorShiftRng::from_seed(seed);
 
-    let mut context = Context::new();
-    context.add("icon", &rng.gen::<ShieldIconData>());
+    let icon_data = rng.gen::<ShieldIconData>();
 
-    let template = Template::new("shield.svg.tmpl", TemplateMode::from_context(context));
+    match &ext[..] {
+        "svg" => {
+            let mut context = Context::new();
+            context.add("icon", &icon_data);
 
-    let mut resp = Response::new();
-    resp.set_mut((status::Ok, template));
-    Ok(resp)
+            let template = Template::new("shield.svg.tmpl", TemplateMode::from_context(context));
+
+            let mut resp = Response::new();
+            let svg_type: mime::Mime = "image/svg+xml;charset=utf-8".parse().unwrap();
+            resp.headers.set(headers::ContentType(svg_type));
+            resp.set_mut((status::Ok, template));
+            Ok(resp)
+        }
+        _ => {
+            let mut resp = Response::new();
+            resp.set_mut((status::BadRequest, format!("Unsupported format \"{}\"", ext)));
+            Ok(resp)
+        }
+    }
 }
