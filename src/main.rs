@@ -42,7 +42,7 @@ fn main() {
     chain.link_after(teng);
     chain.link_after(ErrorHandler);
 
-    let host = "0.0.0.0:3000";
+    let host = "0.0.0.0:8080";
     let server = Iron::new(chain);
     let _listening = server.http(host).expect("could not start server");
     println!("listening on http://{}", host);
