@@ -20,14 +20,6 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::Hasher;
 use tera::Context;
 
-// TODO read PORT and HOST from env
-// TODO add support for versions
-// TODO multiple template support (need another template)
-// TODO can treatments be sub-templates?
-// TODO can templates and their data be better tied?
-// TODO use photon colors instead of solarized colors
-// TODO migrate TODOs to GH issues
-
 fn main() {
     // Rust doesn't have a ctrl-c handler itself, so when running as
     // PID 1 in Docker it doesn't respond to SIGINT. This prevents
