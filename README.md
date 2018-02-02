@@ -13,7 +13,7 @@ hand would be too tedious.
 This project is a Rust web service that generates identicons. Here are
 some examples:
 
-* Identicon: <img src="https://identicons.appspot.com/i/shield/v1/Identicon.svg">
-* Alpha: <img src="https://identicons.appspot.com/i/shield/v1/Alpha.svg">
-* Beta: <img src="https://identicons.appspot.com/i/shield/v1/Beta.svg">
-* Gamma: <img src="https://identicons.appspot.com/i/shield/v1/Gamma.svg">
+* Identicon: <a href="https://identicons.appspot.com/i/shield/v1/Identicon.svg"><img src="https://identicons.appspot.com/i/shield/v1/Identicon.svg" width="64"></a>
+* Alpha: <a href="https://identicons.appspot.com/i/shield/v1/Alpha.svg"><img src="https://identicons.appspot.com/i/shield/v1/Alpha.svg" width="64"></a>
+* Beta: <a href="https://identicons.appspot.com/i/shield/v1/Beta.svg"><img src="https://identicons.appspot.com/i/shield/v1/Beta.svg" width="64"></a>
+* Gamma: <a href="https://identicons.appspot.com/i/shield/v1/Gamma.svg"><img src="https://identicons.appspot.com/i/shield/v1/Gamma.svg" width="64"></a>
