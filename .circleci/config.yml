@@ -3,6 +3,9 @@ jobs:
   build:
     docker:
       - image: docker:18.01-git
+    branches:
+      ignore:
+        - staging.tmp
     steps:
       - checkout
       - setup_remote_docker
