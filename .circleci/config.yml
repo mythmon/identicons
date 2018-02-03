@@ -5,14 +5,12 @@ jobs:
       - image: docker:18.01-git
     steps:
       - checkout
-      - setup_remote_docker:
-          reusable: true
-      - run:
-          name: Validate the docker version
-          command: docker version
+      - setup_remote_docker
       - run:
           name: Build
-          command: docker build -t mythmon/identicons:$CIRCLE_SHA1 .
+          command: |
+            docker build --target build --tag identicons-build .
+            docker build --target production --tag mythmon/identicons:$CIRCLE_SHA1 .
       - run:
           name: Test
-          command: docker run mythmon/identicons:$CIRCLE_SHA1 cargo test
+          command: docker run identicons-build cargo test

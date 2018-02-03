@@ -26,7 +26,7 @@ RUN cargo build --release
 # ----------
 
 # Create a new stage with a minimal image
-FROM debian:jessie-slim
+FROM debian:jessie-slim as production
 WORKDIR /app
 
 # Copies the binary from the "build" stage to the current stage
