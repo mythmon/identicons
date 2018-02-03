@@ -1,0 +1,18 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: docker:18.01-git
+    steps:
+      - checkout
+      - setup_remote_docker:
+          reusable: true
+      - run:
+          name: Validate the docker version
+          command: docker version
+      - run:
+          name: Build
+          command: docker build -t mythmon/identicons:$CIRCLE_SHA1 .
+      - run:
+          name: Test
+          command: docker run mythmon/identicons:$CIRCLE_SHA1 cargo test
