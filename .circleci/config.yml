@@ -13,4 +13,4 @@ jobs:
             docker build --target production --tag mythmon/identicons:$CIRCLE_SHA1 .
       - run:
           name: Test
-          command: docker run identicons-build cargo test
+          command: docker run identicons-build cargo test --release
