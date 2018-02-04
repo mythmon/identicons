@@ -30,8 +30,9 @@ jobs:
   deploy:
     docker:
       - image: google/cloud-sdk:183.0.0
-    working_directory: /tmp/identicons
+    working_directory: /root/project
     steps:
+      - setup_remote_docker
       - run:
           name: Authenticate to GAE
           command: |
