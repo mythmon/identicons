@@ -21,8 +21,11 @@ impl<R: rand::Rng> RngExt for R {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Color {
+    /// Red component
     pub r: u8,
+    /// Blue component
     pub g: u8,
+    /// Green component
     pub b: u8,
 }
 
@@ -31,6 +34,12 @@ impl Color {
         Self { r: 0, g: 0, b: 0 }
     }
 
+    /// Format this color as a CSS color.
+    ///
+    ///     # use identicons::icons::Color;
+    ///     let c = Color { r: 12, g: 34, b: 56 };
+    ///     assert_eq!(c.css_color(), "rgb(12,34,56)".to_string());
+    ///
     pub fn css_color(&self) -> String {
         format!("rgb({},{},{})", self.r, self.g, self.b)
     }
@@ -101,7 +110,7 @@ lazy_static!(
     ];
 );
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type")]
 enum ShieldIconTreatment {
     SingleColor,
@@ -117,7 +126,7 @@ enum ShieldIconTreatment {
     },
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ShieldIconData {
     treatment: ShieldIconTreatment,
     field_color: Color,
@@ -175,5 +184,46 @@ impl rand::Rand for ShieldIconData {
         }
 
         rv
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::{Rng, SeedableRng};
+
+    /// Test that certain seeds always generate the same icon
+    /// data. This is to make sure that icons don't change overtime,
+    /// since they are supposed to always be the same for a particular
+    /// hash.
+    #[test]
+    fn test_consistent_icons() {
+        let expected = ShieldIconData {
+            emoji: '🐛',
+            field_color: Color { r: 133, g: 153, b: 0 },
+            treatment: ShieldIconTreatment::TwoColor {
+                pattern_color: Color { r: 238, g: 232, b: 213 },
+                angle: 45,
+            }
+        };
+        let mut rng = rand::XorShiftRng::from_seed([1, 2, 3, 4]);
+        let actual = rng.gen();
+        assert_eq!(expected, actual);
+
+        // ----
+
+        let expected = ShieldIconData {
+            emoji: '🐅',
+            field_color: Color { r: 220, g: 50, b: 47 },
+            treatment: ShieldIconTreatment::Stripes {
+                pattern_color: Color { r: 255, g: 207, b: 0 },
+                stride: 0.10725436,
+                stripe_xs: vec![0.2318641, 0.44637284, 0.6608815],
+                angle: 45,
+            },
+        };
+        let mut rng = rand::XorShiftRng::from_seed([42, 42, 42, 42]);
+        let actual = rng.gen();
+        assert_eq!(expected, actual);
     }
 }
