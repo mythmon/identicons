@@ -3,9 +3,6 @@ jobs:
   build:
     docker:
       - image: docker:18.01-git
-    branches:
-      ignore:
-        - staging.tmp
     steps:
       - checkout
       - setup_remote_docker
@@ -13,7 +10,59 @@ jobs:
           name: Build
           command: |
             docker build --target build --tag identicons-build .
-            docker build --target production --tag mythmon/identicons:$CIRCLE_SHA1 .
+            docker build --target production --tag identicons-prod .
       - run:
           name: Test
           command: docker run identicons-build cargo test --release
+      - run:
+          filters:
+            branches:
+              only: master
+          name: Save docker image for deploy
+          command: |
+            mkdir -p docker-cache
+            docker save -o docker-cache/identicons-prod.tar identicons-prod
+      - save_cache:
+          key: docker-cache-v1-{{ .Revision }}
+          paths:
+            - docker-cache
+
+  deploy:
+    docker:
+      - image: google/cloud-sdk:183.0.0
+    working_directory: /tmp/identicons
+    steps:
+      - run:
+          name: Authenticate to GAE
+          command: |
+            echo $GCLOUD_SERVICE_KEY | base64 --decode --ignore-garbage > gcloud-service-key.json
+            gcloud auth activate-service-account --key-file=gcloud-service-key.json
+            gcloud config set project identicons
+
+      - restore_cache:
+          key: docker-cache-v1-{{ .Revision }}
+
+      - run:
+          name: Load docker image from build step
+          command: |
+            docker load < docker-cache/identicons-prod.tar
+            docker tag identicons-prod gcr.io/identicons/$CIRCLE_BRANCH:latest
+
+      - run:
+          name: Upload docker image to GCloud
+          command: gcloud docker -- push gcr.io/identicons/$CIRCLE_BRANCH:latest
+
+workflows:
+  version: 2
+  build-deploy:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore: staging.tmp
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
