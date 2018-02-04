@@ -31,7 +31,10 @@ jobs:
     docker:
       - image: google/cloud-sdk:183.0.0
     working_directory: /root/project
+    env:
+      CLOUDSDK_CORE_DISABLE_PROMPTS: 1
     steps:
+      - checkout
       - setup_remote_docker
       - run:
           name: Authenticate to GAE
@@ -47,11 +50,18 @@ jobs:
           name: Load docker image from build step
           command: |
             docker load < docker-cache/identicons-prod.tar
-            docker tag identicons-prod gcr.io/identicons/$CIRCLE_BRANCH:latest
+            docker tag identicons-prod gcr.io/identicons/$CIRCLE_BRANCH:$CIRCLE_SHA1
 
       - run:
-          name: Upload docker image to GCloud
-          command: gcloud docker -- push gcr.io/identicons/$CIRCLE_BRANCH:latest
+          name: Upload image
+          command: gcloud docker -- push gcr.io/identicons/$CIRCLE_BRANCH:$CIRCLE_SHA1
+
+      - run:
+          name: Deploy new version
+          command: >
+            gcloud app deploy
+            --project identicons
+            --image-url gcr.io/identicons/$CIRCLE_BRANCH:$CIRCLE_SHA1
 
 workflows:
   version: 2
