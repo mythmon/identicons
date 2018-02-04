@@ -9,6 +9,7 @@ extern crate ctrlc;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde_json;
 
 use iron::prelude::*;
 use iron::{status, AfterMiddleware, headers, mime};
@@ -259,8 +260,8 @@ fn index(_: &mut Request) -> Result<Response, IronError> {
 }
 
 fn icon_generator(req: &mut Request) -> Result<Response, IronError> {
-    let router = req.extensions.get::<Router>().unwrap();
-    let ref query = router.find("query").unwrap();
+    let router = req.extensions.get::<Router>().unwrap(); // TODO better error handling
+    let ref query = router.find("query").unwrap(); // TODO better error handling
 
     let (seed, ext) = if query.contains(".") {
         let mut parts: Vec<&str> = query.splitn(2, ".").collect();
@@ -293,6 +294,14 @@ fn icon_generator(req: &mut Request) -> Result<Response, IronError> {
             let svg_type: mime::Mime = "image/svg+xml;charset=utf-8".parse().unwrap();
             resp.headers.set(headers::ContentType(svg_type));
             resp.set_mut((status::Ok, template));
+            Ok(resp)
+        }
+        "json" => {
+            let mut resp = Response::new();
+            let json_type: mime::Mime = "application/json;charset=utf-8".parse().unwrap();
+            resp.headers.set(headers::ContentType(json_type));
+            let json = serde_json::to_string(&icon_data).unwrap(); // TODO better error handling
+            resp.set_mut((status::Ok, json));
             Ok(resp)
         }
         _ => {
