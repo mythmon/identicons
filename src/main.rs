@@ -1,6 +1,7 @@
 extern crate ctrlc;
 extern crate identicons;
 
+use std::{env, process};
 use identicons::server::make_icon_server;
 
 fn main() {
@@ -9,11 +10,21 @@ fn main() {
     // ctrl-c from stopping a docker container running this
     // program. Handle SIGINT (aka ctrl-c) to fix this problem.
     ctrlc::set_handler(move || {
-        ::std::process::exit(1);
+        process::exit(0);
     }).expect("error setting ctrl-c handler");
 
-    let host = "0.0.0.0:8080";
+    let host = env::var("HOST").unwrap_or("127.0.0.1".to_string());
+    let port = env::var("PORT").unwrap_or("8080".to_string());
+    let addr = format!("{}:{}", host, port);
+
     let server = make_icon_server();
-    let _listening = server.http(host).expect("could not start server");
-    println!("listening on http://{}", host);
+    let _listening = match server.http(&addr) {
+        Ok(v) => v,
+        Err(e) => {
+            println!("Could not start server: {}", e);
+            process::exit(2);
+        }
+    };
+
+    println!("listening on http://{}", addr);
 }

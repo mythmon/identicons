@@ -33,6 +33,7 @@ WORKDIR /app
 COPY --from=build /app/target/release/identicons .
 COPY --from=build /app/templates ./templates
 
-ENV PORT=3000
+ENV PORT=8080 \
+    HOST=0.0.0.0
 EXPOSE $PORT
 CMD ["/app/identicons"]
