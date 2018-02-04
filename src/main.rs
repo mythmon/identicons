@@ -178,13 +178,13 @@ enum ShieldIconTreatment {
     SingleColor,
     TwoColor {
         pattern_color: Color,
-        transform: String,
+        angle: u16,
     },
     Stripes {
         pattern_color: Color,
         stride: f32,
         stripe_xs: Vec<f32>,
-        transform: String,
+        angle: u16,
     },
 }
 
@@ -229,9 +229,8 @@ impl rand::Rand for ShieldIconData {
         match treatment_name {
             "SingleColor" => (),
             "TwoColor" => {
-                let angle = rng.choose(&angle_choices).unwrap();
-                let transform = format!("scale(100) rotate({} 0.5,0.5)", angle);
-                rv.treatment = ShieldIconTreatment::TwoColor { transform, pattern_color };
+                let angle = *rng.choose(&angle_choices).unwrap();
+                rv.treatment = ShieldIconTreatment::TwoColor { angle, pattern_color };
             },
             "Stripes" => {
                 let count: u8 = rng.gen_range(1, 4);
@@ -240,9 +239,8 @@ impl rand::Rand for ShieldIconData {
                 let stripe_xs: Vec<f32> = (0..count)
                     .map(|i| padding + stride * (2 * i + 1) as f32)
                     .collect();
-                let angle = rng.choose(&angle_choices).unwrap();
-                let transform = format!("scale(100) rotate({} 0.5,0.5)", angle);
-                rv.treatment = ShieldIconTreatment::Stripes { stride, stripe_xs, pattern_color, transform };
+                let angle = *rng.choose(&angle_choices).unwrap();
+                rv.treatment = ShieldIconTreatment::Stripes { stride, stripe_xs, pattern_color, angle };
             },
             _ => panic!("Unexpected treatment name"),
         }

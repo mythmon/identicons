@@ -17,11 +17,11 @@
         <g clip-path="url(#shield-border)">
             <rect fill="{{ icon.field_color | css }}" width="100" height="100"/>
             {% if icon.treatment.type == "TwoColor" %}
-                <g transform="{{ icon.treatment.transform }}">
+                <g transform="scale(100) rotate({{ icon.treatment.angle }} 0.5,0.5)">
                     <rect fill="{{ icon.treatment.pattern_color | css }}" x="-0.25" y="-0.25" width="1.5" height="0.75" />
                 </g>
             {% elif icon.treatment.type == "Stripes" %}
-                <g transform="{{ icon.treatment.transform }}">
+                <g transform="scale(100) rotate({{ icon.treatment.angle }} 0.5,0.5)">
                 {% for stripe_x in icon.treatment.stripe_xs %}
                     <rect
                         x="{{ stripe_x }}"
