@@ -20,10 +20,8 @@ use super::icons::{Color, ShieldIconData, ShapeIconData, ShapeType};
 pub fn make_icon_server() -> Iron<Chain> {
     let mut router = Router::new();
     router.get("/", index, "index");
-    router.get("/i/shield/v0/:query", shield_generator, "shield_0");
     router.get("/i/shield/v1/:query", shield_generator, "shield_1");
     router.get("/i/shape/v0/:query", shape_generator, "shape_0");
-    router.get("/i/shape/v1/:query", shape_generator, "shape_1");
 
     let mut chain = Chain::new(router);
 
