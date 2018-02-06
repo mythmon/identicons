@@ -9,21 +9,36 @@
     <body>
         <div class="wrapper">
             <h1>Identicons</h1>
-            <div id="icons"></div>
+            <h2>Shields</h2>
+            <div id="shields"></div>
+            <h2>Shapes</h2>
+            <div id="shapes"></div>
         </div>
 
         <script>
-         const iconContainer = document.querySelector('#icons');
+         const shieldContainer = document.querySelector('#shields');
+         const shapeContainer = document.querySelector('#shapes');
+
          for (let i = 0; i < 4; i++) {
              const r = Math.floor(Math.random() * Math.pow(36, 6)).toString(36).toUpperCase();
-             const url = `/i/shield/v1/${r}.svg`;
 
-             const link = document.createElement('a');
-             link.setAttribute('href', url);
-             const img = document.createElement('img');
-             img.setAttribute('src', `/i/shield/v1/${r}.svg`);
+             // shield
+             const shieldUrl = `/i/shield/v0/${r}.svg`;
+             let link = document.createElement('a');
+             link.setAttribute('href', shieldUrl);
+             let img = document.createElement('img');
+             img.setAttribute('src', shieldUrl);
              link.appendChild(img);
-             iconContainer.appendChild(link);
+             shieldContainer.appendChild(link);
+
+             // shape
+             const shapeUrl = `/i/shape/v0/${r}.svg`;
+             link = document.createElement('a');
+             link.setAttribute('href', shapeUrl);
+             img = document.createElement('img');
+             img.setAttribute('src', shapeUrl);
+             link.appendChild(img);
+             shapeContainer.appendChild(link);
          }
         </script>
     </body>
