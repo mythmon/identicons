@@ -2,18 +2,27 @@ extern crate rand;
 
 use super::{data, Color};
 
+/// A shape.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ShapeType {
+    /// A polygon of `n` sides.
     Polygon(u8),
+    /// A circle.
     Circle,
 }
 
+/// A description of a shape icon.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ShapeIconData {
+    /// The emoji to overlay on the icon.
     pub emoji: char,
+    /// The icon's shape.
     pub shape: ShapeType,
+    /// The icon's fill color.
     pub fill_color: Color,
+    /// The icon's border color.
     pub border_color: Color,
+    /// The offset of the icon.
     pub offset: f32,
 }
 

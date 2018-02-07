@@ -2,22 +2,36 @@ extern crate rand;
 
 use super::{data, Color, RngExt};
 
+/// A description of a treatment for a shield.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum ShieldIconTreatment {
+    /// A single, solid shield color, aka no treatment.
     SingleColor,
+
+    /// A treatment that results in a two-color shield pattern, by applying
+    /// another color at an angle.
     TwoColor {
+        /// The color of the pattern.
         pattern_color: Color,
+        /// The treatment's angle.
         angle: u16,
     },
+
+    /// A treatment that results in a two-color striped shield pattern.
     Stripes {
+        /// The color of the strips we are adding.
         pattern_color: Color,
+        /// The strip's stride.
         stride: f32,
+        /// X coordinates for the stripes.
         stripe_xs: Vec<f32>,
+        /// Angle of the stripes.
         angle: u16,
     },
 }
 
+/// A description of a shield icon.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ShieldIconData {
     treatment: ShieldIconTreatment,

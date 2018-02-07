@@ -1,3 +1,5 @@
+//! A server that serves up identicons.
+
 extern crate iron;
 extern crate rand;
 extern crate router;
@@ -17,6 +19,7 @@ use rand::{Rng, SeedableRng};
 
 use super::icons::{Color, ShieldIconData, ShapeIconData, ShapeType};
 
+/// Make the icon server.
 pub fn make_icon_server() -> Iron<Chain> {
     let mut router = Router::new();
     router.get("/", index, "index");

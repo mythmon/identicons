@@ -1,3 +1,5 @@
+//! Generating identicons.
+
 extern crate rand;
 
 mod data;
@@ -26,6 +28,7 @@ impl<R: rand::Rng> RngExt for R {
     }
 }
 
+/// An RGB color.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Color {
     /// Red component
@@ -37,10 +40,12 @@ pub struct Color {
 }
 
 impl Color {
+    /// Create the black color.
     pub fn black() -> Self {
         Self { r: 0, g: 0, b: 0 }
     }
 
+    /// Create the white color.
     pub fn white() -> Self {
         Self { r: 255, g: 255, b: 255 }
     }
@@ -55,10 +60,12 @@ impl Color {
         format!("rgb({},{},{})", self.r, self.g, self.b)
     }
 
+    /// Get this color's luminance.
     pub fn luminance(&self) -> f32 {
         0.2126 * self.r as f32 + 0.7152 * self.g as f32 + 0.0722 * self.b as f32
     }
 
+    /// Does this color contrast well with that other color?
     pub fn contrasts_well(&self, other: &Self) -> bool {
         (self.luminance() - other.luminance()).abs() > 75.0
     }
