@@ -17,7 +17,7 @@ use std::hash::Hasher;
 use tera::Context;
 use rand::{Rng, SeedableRng};
 
-use super::icons::{Color, ShieldIconData, ShapeIconData, ShapeType};
+use identicons::{Color, ShieldIconData, ShapeIconData, ShapeType};
 
 /// Make the icon server.
 pub fn make_icon_server() -> Iron<Chain> {

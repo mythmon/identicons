@@ -161,10 +161,23 @@ dependencies = [
 name = "identicons"
 version = "0.2.0"
 dependencies = [
+ "lazy_static 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.3.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tera 0.10.10 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "identicons_server"
+version = "0.1.0"
+dependencies = [
  "ctrlc 3.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "identicons 0.2.0",
  "iron 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "iron-tera 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "lazy_static 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazy_static 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.20 (registry+https://github.com/rust-lang/crates.io-index)",
  "router 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
