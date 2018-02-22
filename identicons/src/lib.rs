@@ -70,7 +70,7 @@ impl Color {
 
     /// Format this color as a CSS color.
     ///
-    ///     # use identicons::icons::Color;
+    ///     # use identicons::Color;
     ///     let c = Color { r: 12, g: 34, b: 56 };
     ///     assert_eq!(c.css_color(), "rgb(12,34,56)".to_string());
     ///
