@@ -6,6 +6,7 @@ authors = ["Mike Cooper <mythmon@gmail.com>"]
 [dependencies]
 iron = "0.5.1"
 tera = "0.10.9"
+identicons = { path = "../identicons" }
 iron-tera = "0.4.0"
 rand = "*"
 router = "0.5.1"
@@ -14,6 +15,3 @@ ctrlc = "*"
 serde = "*"
 serde_derive = "*"
 serde_json = "*"
-
-[dependencies.identicons]
-path = "../identicons"

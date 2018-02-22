@@ -1,26 +1,12 @@
 FROM rust:1.23-jessie as build
 
-# Creates a dummy project used to build dependencies
-# This helps caching
-RUN USER=root cargo new --bin app
 WORKDIR /app
 
-# Copies over *only* dependency manifests
-COPY ./Cargo.lock ./Cargo.lock
 COPY ./Cargo.toml ./Cargo.toml
+COPY ./Cargo.lock ./Cargo.lock
+COPY ./identicons/ ./identicons/
+COPY ./identicons-server/ ./identicons-server/
 
-# Build dependencies
-RUN cargo build --release
-# Remove the fake source code
-RUN rm ./src/*.rs
-# Remove the fake binary
-RUN rm target/release/identicons
-
-# Copies the actual source code
-COPY ./src ./src
-COPY ./templates ./templates
-
-# Build the app
 RUN cargo build --release
 
 # ----------
@@ -30,10 +16,10 @@ FROM debian:jessie-slim as production
 WORKDIR /app
 
 # Copies the binary from the "build" stage to the current stage
-COPY --from=build /app/target/release/identicons .
-COPY --from=build /app/templates ./templates
+COPY --from=build /app/target/release/identicons_server .
+COPY --from=build /app/identicons-server/templates ./templates
 
 ENV PORT=8080 \
     HOST=0.0.0.0
 EXPOSE $PORT
-CMD ["/app/identicons"]
+CMD ["/app/identicons_server"]
