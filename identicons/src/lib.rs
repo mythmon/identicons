@@ -23,6 +23,7 @@ extern crate serde_json;
 mod data;
 mod shields;
 mod shapes;
+mod templ;
 
 pub use self::shields::{ShieldIconData, ShieldIconTreatment};
 pub use self::shapes::{ShapeIconData, ShapeType};

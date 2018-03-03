@@ -1,6 +1,9 @@
 extern crate rand;
+extern crate tera;
 
+use std::default::Default;
 use super::{data, Color, RngExt};
+use super::templ;
 
 /// A description of a treatment for a shield.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -40,18 +43,17 @@ pub struct ShieldIconData {
 }
 
 impl ShieldIconData {
-    fn empty() -> Self {
-        ShieldIconData {
-            treatment: ShieldIconTreatment::SingleColor,
-            field_color: Color::black(),
-            emoji: ' ',
-        }
+    /// Render as an SVG.
+    pub fn to_svg(&self) -> Result<String, tera::Error> {
+        let mut context = tera::Context::new();
+        context.add("icon", &self);
+        templ::render("shield.svg.tmpl", &context)
     }
 }
 
 impl rand::Rand for ShieldIconData {
     fn rand<R: rand::Rng>(rng: &mut R) -> Self {
-        let mut rv = ShieldIconData::empty();
+        let mut rv = ShieldIconData::default();
 
         let angle_choices: Vec<u16> = (0..8).map(|a| a * 45).collect();
 
@@ -90,6 +92,16 @@ impl rand::Rand for ShieldIconData {
         }
 
         rv
+    }
+}
+
+impl Default for ShieldIconData {
+    fn default() -> Self {
+        ShieldIconData {
+            treatment: ShieldIconTreatment::SingleColor,
+            field_color: Color::black(),
+            emoji: 'A',
+        }
     }
 }
 

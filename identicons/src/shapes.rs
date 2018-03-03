@@ -1,6 +1,8 @@
 extern crate rand;
+extern crate tera;
 
-use super::{data, Color};
+use std::default::Default;
+use super::{data, Color, templ};
 
 /// A shape.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -27,20 +29,32 @@ pub struct ShapeIconData {
 }
 
 impl ShapeIconData {
-    fn empty() -> Self {
-        ShapeIconData {
-            emoji: ' ',
-            shape: ShapeType::Circle,
-            fill_color: Color::white(),
-            border_color: Color::black(),
-            offset: 0.0,
+
+    /// Render as an SVG.
+    pub fn to_svg(&self) -> tera::Result<String> {
+        let mut context = tera::Context::new();
+        context.add("icon", &self);
+
+        if let ShapeType::Polygon(sides) = self.shape {
+            let step = ::std::f32::consts::PI * 2.0 / (sides as f32);
+            let offset = step * self.offset;
+            let radius = 0.45;
+            let points: Vec<(f32, f32)> = (0..sides)
+                .map(|i| {
+                    let ang = step * i as f32 + offset;
+                    (ang.cos() * radius + 0.5, ang.sin() * radius + 0.5)
+                })
+                .collect();
+            context.add("points", &points);
         }
+
+        templ::render("shape.svg.tmpl", &context)
     }
 }
 
 impl rand::Rand for ShapeIconData {
     fn rand<R: rand::Rng>(rng: &mut R) -> Self {
-        let mut rv = ShapeIconData::empty();
+        let mut rv = ShapeIconData::default();
 
         rv.emoji = *rng.choose(&data::EMOJIS).unwrap();
 
@@ -75,6 +89,18 @@ impl rand::Rand for ShapeIconData {
         }
 
         rv
+    }
+}
+
+impl Default for ShapeIconData {
+    fn default() -> Self {
+        ShapeIconData {
+            emoji: 'A',
+            shape: ShapeType::Circle,
+            fill_color: Color::white(),
+            border_color: Color::black(),
+            offset: 0.0,
+        }
     }
 }
 
