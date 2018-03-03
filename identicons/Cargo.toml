@@ -1,0 +1,12 @@
+[package]
+name = "identicons"
+version = "0.2.0"
+authors = ["Mike Cooper <mythmon@gmail.com>"]
+
+[dependencies]
+tera = "0.10.9"
+rand = "*"
+lazy_static = "*"
+serde = "*"
+serde_derive = "*"
+serde_json = "*"

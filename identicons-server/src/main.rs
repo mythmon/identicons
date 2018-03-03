@@ -1,8 +1,8 @@
 extern crate ctrlc;
-extern crate identicons;
+extern crate identicons_server;
 
 use std::{env, process};
-use identicons::server::make_icon_server;
+use identicons_server::make_icon_server;
 
 fn main() {
     // Rust doesn't have a ctrl-c handler itself, so when running as

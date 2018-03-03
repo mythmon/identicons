@@ -1,16 +1,2 @@
-[package]
-name = "identicons"
-version = "0.2.0"
-authors = ["Mike Cooper <mythmon@gmail.com>"]
-
-[dependencies]
-iron = "0.5.1"
-tera = "0.10.9"
-iron-tera = "0.4.0"
-rand = "*"
-router = "0.5.1"
-lazy_static = "*"
-ctrlc = "*"
-serde = "*"
-serde_derive = "*"
-serde_json = "*"
+[workspace]
+members = ["identicons", "identicons-server"]
