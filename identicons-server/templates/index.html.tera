@@ -21,9 +21,9 @@
     <body>
         <div class="wrapper">
             <h1>Identicons</h1>
-            <h2>Shields v1 (stable)</h2>
+            <h2>Shields v1</h2>
             <div id="shields"></div>
-            <h2>Shapes v0 (unstable)</h2>
+            <h2>Shapes v0</h2>
             <div id="shapes"></div>
             <a href="https://github.com/mythmon/identicons">Source on Github</a>
         </div>
