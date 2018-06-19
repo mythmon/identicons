@@ -65,7 +65,7 @@ fn tera_to_css(value: tera::Value, _args: HashMap<String, tera::Value>) -> tera:
 
 fn index(_: &mut Request) -> Result<Response, IronError> {
     let context = Context::new();
-    let template = Template::new("index.html.tmpl", TemplateMode::from_context(context));
+    let template = Template::new("index.html.tera", TemplateMode::from_context(context));
     let mut resp = Response::new();
     resp.set_mut((status::Ok, template));
     Ok(resp)
@@ -104,7 +104,7 @@ fn shield_generator(req: &mut Request) -> Result<Response, IronError> {
             let mut context = Context::new();
             context.add("icon", &icon_data);
 
-            let template = Template::new("shield.svg.tmpl", TemplateMode::from_context(context));
+            let template = Template::new("shield.svg.tera", TemplateMode::from_context(context));
 
             let mut resp = Response::new();
             let svg_type: mime::Mime = "image/svg+xml;charset=utf-8".parse().unwrap();
@@ -153,7 +153,7 @@ fn shape_generator(req: &mut Request) -> Result<Response, IronError> {
                 context.add("points", &points);
             }
 
-            let template = Template::new("shape.svg.tmpl", TemplateMode::from_context(context));
+            let template = Template::new("shape.svg.tera", TemplateMode::from_context(context));
 
             let mut resp = Response::new();
             let svg_type: mime::Mime = "image/svg+xml;charset=utf-8".parse().unwrap();

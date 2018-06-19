@@ -10,8 +10,8 @@ lazy_static! {
     pub static ref TERA_ENGINE: tera::Tera = {
         let mut engine = tera::Tera::default();
         engine.add_raw_templates(vec![
-            ("shield.svg.tmpl", include_str!("templates/shield.svg.tmpl")),
-            ("shape.svg.tmpl", include_str!("templates/shape.svg.tmpl")),
+            ("shield.svg.tera", include_str!("templates/shield.svg.tera")),
+            ("shape.svg.tera", include_str!("templates/shape.svg.tera")),
         ]).unwrap();
         engine.register_filter("css", tera_to_css);
         engine

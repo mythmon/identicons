@@ -47,7 +47,7 @@ impl ShieldIconData {
     pub fn to_svg(&self) -> Result<String, tera::Error> {
         let mut context = tera::Context::new();
         context.add("icon", &self);
-        templ::render("shield.svg.tmpl", &context)
+        templ::render("shield.svg.tera", &context)
     }
 }
 
