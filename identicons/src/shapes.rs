@@ -48,7 +48,7 @@ impl ShapeIconData {
             context.add("points", &points);
         }
 
-        templ::render("shape.svg.tmpl", &context)
+        templ::render("shape.svg.tera", &context)
     }
 }
 
