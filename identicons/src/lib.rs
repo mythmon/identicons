@@ -11,6 +11,7 @@
 
 #![deny(missing_docs)]
 
+extern crate num;
 extern crate rand;
 extern crate tera;
 #[macro_use]
@@ -19,33 +20,16 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
+extern crate sha2;
 
 mod data;
-mod shields;
+mod genome;
 mod shapes;
+mod shields;
 mod templ;
 
-pub use self::shields::{ShieldIconData, ShieldIconTreatment};
 pub use self::shapes::{ShapeIconData, ShapeType};
-
-trait RngExt {
-    /// Choose a random item from a collection by weight.
-    fn weighted_choice<T>(&mut self, choices: Vec<(T, usize)>) -> T;
-}
-
-impl<R: rand::Rng> RngExt for R {
-    fn weighted_choice<T>(&mut self, choices: Vec<(T, usize)>) -> T {
-        let sum_weights = choices.iter().map(|c| c.1).sum();
-        let mut choice = self.gen_range(0, sum_weights);
-        for (item, weight) in choices.into_iter() {
-            if choice < weight {
-                return item;
-            }
-            choice -= weight;
-        }
-        unreachable!("No items chosen");
-    }
-}
+pub use self::shields::{ShieldIconData, ShieldIconTreatment};
 
 /// An RGB color.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -66,7 +50,11 @@ impl Color {
 
     /// Create the white color.
     pub fn white() -> Self {
-        Self { r: 255, g: 255, b: 255 }
+        Self {
+            r: 255,
+            g: 255,
+            b: 255,
+        }
     }
 
     /// Format this color as a CSS color.

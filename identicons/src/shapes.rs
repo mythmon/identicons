@@ -1,9 +1,10 @@
 extern crate rand;
 extern crate tera;
 
+use super::{
+    data, genome::{Genome, GenomeGen, GenomeResult}, templ, Color,
+};
 use std::default::Default;
-use rand::{Rng, distributions::{Distribution, Standard}};
-use super::{data, Color, templ};
 
 /// A shape.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -30,6 +31,12 @@ pub struct ShapeIconData {
 }
 
 impl ShapeIconData {
+    /// Generate a ShapeIconData by hashing an input and choosing unpredictable
+    /// values for all parameters.
+    pub fn from_input<'a, T: Into<String>>(input: T) -> GenomeResult<Self> {
+        let mut genome = Genome::via_sha512(input);
+        genome.gen()
+    }
 
     /// Render as an SVG.
     pub fn to_svg(&self) -> tera::Result<String> {
@@ -53,27 +60,29 @@ impl ShapeIconData {
     }
 }
 
-impl Distribution<ShapeIconData> for Standard {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> ShapeIconData {
+impl GenomeGen for ShapeIconData {
+    fn gen(genome: &mut Genome) -> Result<Self, ()> {
         let mut rv = ShapeIconData::default();
 
-        rv.emoji = *rng.choose(&data::EMOJIS).unwrap();
+        rv.emoji = genome.choose(&data::EMOJIS)?;
 
         let white = Color::white();
-        let contrasts_with_white: Vec<Color> = data::COLORS.iter()
+        let contrasts_with_white: Vec<Color> = data::COLORS
+            .iter()
             .filter(|c| white.contrasts_well(c))
             .map(|c| *c)
             .collect();
 
-        rv.border_color = *rng.choose(&contrasts_with_white).unwrap();
+        rv.border_color = genome.choose(&contrasts_with_white)?;
 
-        let contrasts_with_border: Vec<Color> = data::COLORS.iter()
+        let contrasts_with_border: Vec<Color> = data::COLORS
+            .iter()
             .filter(|c| rv.border_color.contrasts_well(c))
             .map(|c| *c)
             .collect();
-        rv.fill_color = *rng.choose(&contrasts_with_border).unwrap();
+        rv.fill_color = genome.choose(&contrasts_with_border)?;
 
-        let num_sides: u8 = rng.gen_range(1, 10);
+        let num_sides: u8 = genome.gen_range(1u8, 10u8)?;
         if num_sides <= 2 {
             // A polygon with 2 or fewer sides doesn't make sense, so make it a circle instead.
             rv.shape = ShapeType::Circle;
@@ -82,14 +91,16 @@ impl Distribution<ShapeIconData> for Standard {
         }
 
         // bias aligned and half aligned by giving then 1/4 of the space each
-        rv.offset = rng.gen_range(-1.0, 1.0);
-        if rv.offset < 0.5 {
+        let rotation: u8 = genome.gen_range(0, 100)?;
+        if rotation >= 75 {
             rv.offset = 0.5;
-        } else if rv.offset < 0.0 {
+        } else if rotation >= 50 {
             rv.offset = 0.0;
+        } else {
+            rv.offset = rotation as f32 / 50.
         }
 
-        rv
+        Ok(rv)
     }
 }
 
@@ -108,7 +119,6 @@ impl Default for ShapeIconData {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::{Rng, SeedableRng};
 
     /// Test that certain seeds always generate the same icon
     /// data. This is to make sure that icons don't change overtime,
@@ -116,28 +126,41 @@ mod tests {
     /// hash.
     #[test]
     fn test_consistent_icons() {
-        let mut rng = rand::XorShiftRng::from_seed([0u8; 16]);
         let expected = ShapeIconData {
-            emoji: '😞',
+            emoji: '🎺',
             shape: ShapeType::Polygon(4),
-            fill_color: Color { r: 0, g: 254, b: 255 },
-            border_color: Color { r: 0, g: 96, b: 223 },
-            offset: 0.5,
+            fill_color: Color {
+                r: 18,
+                g: 188,
+                b: 0,
+            },
+            border_color: Color {
+                r: 128,
+                g: 0,
+                b: 215,
+            },
+            offset: 0.0,
         };
-        let actual = rng.gen();
+        let actual = ShapeIconData::from_input("one").unwrap();
         assert_eq!(expected, actual);
 
         // ----
-
+ 
         let expected = ShapeIconData {
-            emoji: '🙉',
-            shape: ShapeType::Polygon(5),
-            fill_color: Color { r: 18, g: 188, b: 0 },
-            border_color: Color { r: 42, g: 42, b: 46 },
-            offset: 0.5,
+            emoji: '🚛',
+            shape: ShapeType::Polygon(6),
+            fill_color: Color {
+                r: 90,
+                g: 0,
+                b: 2,
+            },
+            border_color: Color {
+                r: 48,
+                g: 230,
+                b: 11,
+            },
+            offset: 0.04,
         };
-        let mut rng = rand::XorShiftRng::from_seed([42u8; 16]);
-        let actual = rng.gen();
-        assert_eq!(expected, actual);
-    }
+        let actual = ShapeIconData::from_input("two").unwrap();
+        assert_eq!(expected, actual);     }
 }
