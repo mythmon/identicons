@@ -1,4 +1,4 @@
-FROM rust:1.23-jessie as build
+FROM rust:1.26-jessie as build
 
 WORKDIR /app
 
@@ -17,7 +17,6 @@ WORKDIR /app
 
 # Copies the binary from the "build" stage to the current stage
 COPY --from=build /app/target/release/identicons_server .
-COPY --from=build /app/identicons-server/templates ./templates
 
 ENV PORT=8080 \
     HOST=0.0.0.0
