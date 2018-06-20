@@ -2,6 +2,7 @@ extern crate rand;
 extern crate tera;
 
 use std::default::Default;
+use rand::{Rng, distributions::{Distribution, Standard}};
 use super::{data, Color, RngExt};
 use super::templ;
 
@@ -51,8 +52,8 @@ impl ShieldIconData {
     }
 }
 
-impl rand::Rand for ShieldIconData {
-    fn rand<R: rand::Rng>(rng: &mut R) -> Self {
+impl Distribution<ShieldIconData> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, mut rng: &mut R) -> ShieldIconData {
         let mut rv = ShieldIconData::default();
 
         let angle_choices: Vec<u16> = (0..8).map(|a| a * 45).collect();
@@ -116,14 +117,11 @@ mod tests {
     /// hash.
     #[test]
     fn test_consistent_icons() {
-        let mut rng = rand::XorShiftRng::from_seed([1, 2, 3, 4]);
+        let mut rng = rand::XorShiftRng::from_seed([0u8; 16]);
         let expected = ShieldIconData {
-            emoji: '🐛',
-            field_color: Color { r: 164, g: 0, b: 15 },
-            treatment: ShieldIconTreatment::TwoColor {
-                pattern_color: Color { r: 0, g: 254, b: 255 },
-                angle: 45,
-            },
+            emoji: '😞',
+            field_color: Color { r: 0, g: 96, b: 223 },
+            treatment: ShieldIconTreatment::SingleColor,
         };
         let actual = rng.gen();
         assert_eq!(expected, actual);
@@ -131,16 +129,16 @@ mod tests {
         // ----
 
         let expected = ShieldIconData {
-            emoji: '🐅',
-            field_color: Color { r: 68, g: 0, b: 113 },
+            emoji: '🙉',
+            field_color: Color { r: 5, g: 139, b: 0 },
             treatment: ShieldIconTreatment::Stripes {
-                pattern_color: Color { r: 215, g: 110, b: 0 },
-                stride: 0.10725436,
-                stripe_xs: vec![0.2318641, 0.44637284, 0.6608815],
+                pattern_color: Color { r: 177, g: 177, b: 179 },
+                stride: 0.24075855,
+                stripe_xs: vec![0.37962073],
                 angle: 45,
             },
         };
-        let mut rng = rand::XorShiftRng::from_seed([42, 42, 42, 42]);
+        let mut rng = rand::XorShiftRng::from_seed([42u8; 16]);
         let actual = rng.gen();
         assert_eq!(expected, actual);
     }

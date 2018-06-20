@@ -2,6 +2,7 @@ extern crate rand;
 extern crate tera;
 
 use std::default::Default;
+use rand::{Rng, distributions::{Distribution, Standard}};
 use super::{data, Color, templ};
 
 /// A shape.
@@ -52,8 +53,8 @@ impl ShapeIconData {
     }
 }
 
-impl rand::Rand for ShapeIconData {
-    fn rand<R: rand::Rng>(rng: &mut R) -> Self {
+impl Distribution<ShapeIconData> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> ShapeIconData {
         let mut rv = ShapeIconData::default();
 
         rv.emoji = *rng.choose(&data::EMOJIS).unwrap();
@@ -115,12 +116,12 @@ mod tests {
     /// hash.
     #[test]
     fn test_consistent_icons() {
-        let mut rng = rand::XorShiftRng::from_seed([1, 2, 3, 4]);
+        let mut rng = rand::XorShiftRng::from_seed([0u8; 16]);
         let expected = ShapeIconData {
-            emoji: '😃',
-            shape: ShapeType::Polygon(8),
+            emoji: '😞',
+            shape: ShapeType::Polygon(4),
             fill_color: Color { r: 0, g: 254, b: 255 },
-            border_color: Color { r: 98, g: 0, b: 164 },
+            border_color: Color { r: 0, g: 96, b: 223 },
             offset: 0.5,
         };
         let actual = rng.gen();
@@ -129,13 +130,13 @@ mod tests {
         // ----
 
         let expected = ShapeIconData {
-            emoji: '🐅',
-            shape: ShapeType::Polygon(9),
-            fill_color: Color { r: 177, g: 177, b: 179 },
-            border_color: Color { r: 0, g: 90, b: 113 },
+            emoji: '🙉',
+            shape: ShapeType::Polygon(5),
+            fill_color: Color { r: 18, g: 188, b: 0 },
+            border_color: Color { r: 42, g: 42, b: 46 },
             offset: 0.5,
         };
-        let mut rng = rand::XorShiftRng::from_seed([42, 42, 42, 42]);
+        let mut rng = rand::XorShiftRng::from_seed([42u8; 16]);
         let actual = rng.gen();
         assert_eq!(expected, actual);
     }

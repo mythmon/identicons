@@ -33,7 +33,7 @@
          const shapeContainer = document.querySelector('#shapes');
 
          for (let i = 0; i < 4; i++) {
-             const r = Math.floor(Math.random() * Math.pow(36, 6)).toString(36).toUpperCase();
+             let r = Math.floor(Math.random() * Math.pow(36, 6)).toString(36).toUpperCase();
 
              // shield
              const shieldUrl = `/i/shield/v1/${r}.svg`;
@@ -43,6 +43,8 @@
              img.setAttribute('src', shieldUrl);
              link.appendChild(img);
              shieldContainer.appendChild(link);
+
+             r = Math.floor(Math.random() * Math.pow(36, 6)).toString(36).toUpperCase();
 
              // shape
              const shapeUrl = `/i/shape/v0/${r}.svg`;
