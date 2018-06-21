@@ -16,7 +16,7 @@ extern crate tera;
 
 use actix_web::{App, HttpRequest, HttpResponse, Path};
 use listenfd::ListenFd;
-use std::{collections::hash_map::DefaultHasher, env, hash::Hasher, process};
+use std::{env, process};
 use tera::Context;
 
 use identicons::{ShapeIconData, ShieldIconData};
@@ -52,8 +52,12 @@ fn main() {
 fn make_app() -> App {
     App::new()
         .resource("/", |r| r.get().f(index))
-        .resource("/i/shield/v1/{query}", |r| r.get().with(shield_generator))
-        .resource("/i/shape/v0/{query}", |r| r.get().with(shape_generator))
+        .resource("/i/shield/v1/{seed}.{format}", |r| {
+            r.get().with(shield_generator)
+        })
+        .resource("/i/shape/v0/{seed}.{format}", |r| {
+            r.get().with(shape_generator)
+        })
 }
 
 fn index(_: HttpRequest) -> impl actix_web::Responder {
@@ -63,86 +67,55 @@ fn index(_: HttpRequest) -> impl actix_web::Responder {
     HttpResponse::Ok().content_type("text/html").body(content)
 }
 
-fn parse_query(query: &String) -> ([u8; 16], String) {
-    let (seed, format) = if query.contains(".") {
-        let mut parts: Vec<&str> = query.splitn(2, ".").collect();
-        let format = parts.pop().unwrap().to_string();
-        let seed = parts.pop().unwrap().to_string();
-        (seed, format)
-    } else {
-        (query.to_string(), "svg".to_string())
-    };
-
-    let mut hasher = DefaultHasher::new();
-    hasher.write(&seed.bytes().collect::<Vec<u8>>());
-    let hash = hasher.finish();
-
-    let mut seed_vec = Vec::with_capacity(16);
-    for i in 0..8 {
-        let offset = i * 8;
-        let mask = 0xFF << offset;
-        let byte = (hash & mask) >> offset;
-        seed_vec.push(byte as u8);
-    }
-    seed_vec.resize(16, 0);
-    let mut seed = [0u8; 16];
-    seed.copy_from_slice(&seed_vec[..]);
-
-    (seed, format)
+#[derive(Debug, Deserialize)]
+struct GeneratorInfo {
+    seed: String,
+    format: GeneratorFormat,
 }
 
 #[derive(Debug, Deserialize)]
-struct GeneratorInfo {
-    query: String,
+enum GeneratorFormat {
+    #[serde(rename = "svg")]
+    Svg,
+    #[serde(rename = "json")]
+    Json,
 }
 
-fn shield_generator(
-    info: Path<GeneratorInfo>,
-) -> Result<impl actix_web::Responder, GeneratorError> {
-    let (seed, format) = parse_query(&info.query);
-    let seed = String::from_utf8_lossy(&seed).into_owned();
-    let icon_data = ShieldIconData::from_input(&seed[..])?;
+fn shield_generator(info: Path<GeneratorInfo>) -> Result<HttpResponse, GeneratorError> {
+    let icon_data = ShieldIconData::from_input(&info.seed[..])?;
 
-    Ok(match &format[..] {
-        "svg" => {
-            let content = icon_data.to_svg().unwrap();
+    Ok(match info.format {
+        GeneratorFormat::Svg => {
+            let content = icon_data.to_svg()?;
             HttpResponse::Ok()
                 .content_type("image/svg+xml")
                 .body(content)
         }
-        "json" => {
-            let json = serde_json::to_string(&icon_data).unwrap(); // TODO better error handling
+        GeneratorFormat::Json => {
+            let json = serde_json::to_string(&icon_data)?;
             HttpResponse::Ok()
                 .content_type("application/json")
                 .body(json)
         }
-        _ => HttpResponse::BadRequest()
-            .content_type("text/plain")
-            .body(format!("Unsupported format \"{}\"", format)),
     })
 }
 
 fn shape_generator(info: Path<GeneratorInfo>) -> Result<impl actix_web::Responder, GeneratorError> {
-    let (seed, format) = parse_query(&info.query);
-    let seed = String::from_utf8_lossy(&seed).into_owned();
-    let icon_data = ShapeIconData::from_input(&seed[..])?;
+    let icon_data = ShapeIconData::from_input(&info.seed[..])?;
 
-    Ok(match &format[..] {
-        "svg" => {
+    Ok(match info.format {
+        GeneratorFormat::Svg => {
             let content = icon_data.to_svg().unwrap();
             HttpResponse::Ok()
                 .content_type("image/svg+xml")
                 .body(content)
         }
-        "json" => {
+        GeneratorFormat::Json => {
             let json = serde_json::to_string(&icon_data).unwrap(); // TODO better error handling
             HttpResponse::Ok()
                 .content_type("application/json")
                 .body(json)
         }
-        _ => HttpResponse::BadRequest()
-            .content_type("text/plain")
-            .body(format!("Unsupported format \"{}\"", format)),
     })
 }
 
@@ -159,7 +132,7 @@ impl actix_web::error::ResponseError for GeneratorError {
 
 impl std::error::Error for GeneratorError {
     fn description(&self) -> &str {
-        "There was an error generating the image"
+        "There was an unknown error generating the image"
     }
 }
 
@@ -170,22 +143,56 @@ impl std::fmt::Display for GeneratorError {
     }
 }
 
-impl From<()> for GeneratorError {
-    fn from(_: ()) -> Self {
-        GeneratorError
-    }
+macro_rules! from_for_generator_error {
+    ($t:ty) => {
+        impl From<$t> for GeneratorError {
+            fn from(_: $t) -> Self {
+                GeneratorError
+            }
+        }
+    };
 }
+
+from_for_generator_error!(());
+from_for_generator_error!(serde_json::Error);
+from_for_generator_error!(tera::Error);
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::{http, test};
+    use actix_web::{
+        http::{Method, StatusCode}, test, HttpMessage,
+    };
     use std::default::Default;
 
     #[test]
     fn test_index() {
         let req = test::TestRequest::default();
         let res = req.run(index).unwrap();
-        assert_eq!(res.status(), http::StatusCode::OK);
+        assert_eq!(res.status(), StatusCode::OK);
+    }
+
+    #[test]
+    fn test_routing() {
+        let mut srv = test::TestServer::with_factory(make_app);
+
+        let req = srv
+            .client(Method::GET, "/i/shield/v1/test.svg")
+            .finish()
+            .unwrap();
+        let res = srv.execute(req.send()).unwrap();
+        assert_eq!(res.status(), StatusCode::OK);
+        assert_eq!(res.headers().get("content-type").unwrap(), "image/svg+xml");
+
+        let req = srv
+            .client(Method::GET, "/i/shield/v1/test.json")
+            .finish()
+            .unwrap();
+        let res = srv.execute(req.send()).unwrap();
+        assert_eq!(res.status(), StatusCode::OK);
+        assert_eq!(
+            res.headers().get("content-type").unwrap(),
+            "application/json"
+        );
     }
 }

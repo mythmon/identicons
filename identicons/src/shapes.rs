@@ -145,15 +145,11 @@ mod tests {
         assert_eq!(expected, actual);
 
         // ----
- 
+
         let expected = ShapeIconData {
             emoji: '🚛',
             shape: ShapeType::Polygon(6),
-            fill_color: Color {
-                r: 90,
-                g: 0,
-                b: 2,
-            },
+            fill_color: Color { r: 90, g: 0, b: 2 },
             border_color: Color {
                 r: 48,
                 g: 230,
@@ -162,5 +158,6 @@ mod tests {
             offset: 0.04,
         };
         let actual = ShapeIconData::from_input("two").unwrap();
-        assert_eq!(expected, actual);     }
+        assert_eq!(expected, actual);
+    }
 }
