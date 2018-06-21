@@ -160,4 +160,18 @@ mod tests {
         let actual = ShapeIconData::from_input("two").unwrap();
         assert_eq!(expected, actual);
     }
+
+    proptest! {
+        #[test]
+        fn prop_repeatable_results(ref s in ".*") {
+            let first = ShapeIconData::from_input(s.clone());
+            let second = ShapeIconData::from_input(s.clone());
+            assert_eq!(first, second);
+        }
+
+        #[test]
+        fn prop_does_not_exhaust_genome(ref s in ".*") {
+            assert!(ShapeIconData::from_input(s.clone()).is_ok());
+        }
+    }
 }

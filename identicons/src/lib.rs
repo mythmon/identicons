@@ -22,6 +22,10 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate sha2;
 
+#[cfg(test)]
+#[macro_use]
+extern crate proptest;
+
 mod data;
 mod genome;
 mod shapes;
